@@ -11,18 +11,18 @@ interface Source {
 const SOURCES: Source[] = [
   {
     label: 'سيرفر 1',
-    movie: (id) => `https://vidsrc.to/embed/movie/${id}`,
-    tv: (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
+    movie: (id) => `https://vidsrc.me/embed/movie?tmdb=${id}`,
+    tv: (id, s, e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
   },
   {
     label: 'سيرفر 2',
-    movie: (id) => `https://vidsrc.xyz/embed/movie?tmdb=${id}`,
-    tv: (id, s, e) => `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
+    movie: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
+    tv: (id, s, e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`,
   },
   {
     label: 'سيرفر 3',
-    movie: (id) => `https://2embed.cc/embed/${id}`,
-    tv: (id, s, e) => `https://2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
+    movie: (id) => `https://autoembed.cc/movie/tmdb-${id}`,
+    tv: (id, s, e) => `https://autoembed.cc/tv/tmdb-${id}-${s}-${e}`,
   },
 ];
 
@@ -114,8 +114,7 @@ export default function EmbedPlayer({
           allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
           referrerPolicy="origin"
-          sandbox="allow-scripts allow-same-origin allow-presentation allow-pointer-lock allow-forms"
-          className="absolute inset-0 w-full h-full border-0"
+className="absolute inset-0 w-full h-full border-0"
           onLoad={() => setLoaded(true)}
         />
       </div>
