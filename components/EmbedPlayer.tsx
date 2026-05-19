@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Source {
   label: string;
@@ -54,6 +54,13 @@ export default function EmbedPlayer({
   const embedUrl = arabicSubs
     ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}ds_langs=ar&sub_lang=ar`
     : baseUrl;
+
+  // Mobile browsers (iOS Safari) often don't fire onLoad for cross-origin iframes.
+  // Fall back to showing the player after 5s regardless.
+  useEffect(() => {
+    const t = setTimeout(() => setLoaded(true), 5000);
+    return () => clearTimeout(t);
+  }, [embedUrl]);
 
   return (
     <div className="space-y-2.5">
