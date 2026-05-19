@@ -40,7 +40,7 @@ export default function Logo({ size = 'default', asSpan = false }: LogoProps) {
   const text = (
     <span className={`${textClass[size]} font-extrabold tracking-tight leading-none`}>
       <span className="text-white">Cine</span>
-      <span className="text-[#e63946]">Max</span>
+      <span className="text-[#e63946]">May</span>
     </span>
   );
 

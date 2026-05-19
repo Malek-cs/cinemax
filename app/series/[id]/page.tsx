@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: series.name,
     description: series.overview?.slice(0, 160),
     openGraph: {
-      title: `${series.name} | CineMax`,
+      title: `${series.name} | CineMay`,
       description: series.overview?.slice(0, 160),
       images: series.backdrop_path
         ? [`https://image.tmdb.org/t/p/w1280${series.backdrop_path}`]

@@ -13,8 +13,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title: q ? `Search: ${q}` : 'Search Movies & Series',
     description: q
-      ? `Search results for "${q}" on CineMax`
-      : 'Search and discover movies and series on CineMax',
+      ? `Search results for "${q}" on CineMay`
+      : 'Search and discover movies and series on CineMay',
   };
 }
 

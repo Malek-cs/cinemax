@@ -9,21 +9,21 @@ const dmSans = DM_Sans({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
-    default: 'CineMax — Watch Movies & Series Online',
-    template: '%s | CineMax',
+    default: 'CineMay — Watch Movies & Series Online',
+    template: '%s | CineMay',
   },
   description:
-    'Stream the latest movies and TV series on CineMax. Trending content, top rated films, and popular shows — all in one place.',
+    'Stream the latest movies and TV series on CineMay. Trending content, top rated films, and popular shows — all in one place.',
   openGraph: {
     type: 'website',
-    siteName: 'CineMax',
-    title: 'CineMax — Watch Movies & Series Online',
-    description: 'Stream the latest movies and TV series on CineMax.',
+    siteName: 'CineMay',
+    title: 'CineMay — Watch Movies & Series Online',
+    description: 'Stream the latest movies and TV series on CineMay.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CineMax',
-    description: 'Stream the latest movies and TV series on CineMax.',
+    title: 'CineMay',
+    description: 'Stream the latest movies and TV series on CineMay.',
   },
 };
 
@@ -39,9 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <main>{children}</main>
           <footer className="border-t border-white/5 mt-16 py-8 px-4 text-center text-gray-600 text-sm">
-            <p>© {new Date().getFullYear()} CineMax. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} CineMay. All rights reserved.</p>
             <p className="mt-1 text-xs text-gray-700">
-              Powered by Stinson boy. This product uses the TMDB API but is not endorsed or certified by TMDB.
+              Powered by Stinson boy.
             </p>
           </footer>
         </SessionProvider>

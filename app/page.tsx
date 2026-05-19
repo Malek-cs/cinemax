@@ -6,9 +6,9 @@ import GenreFilter from '@/components/GenreFilter';
 import PalestineSupport from '@/components/PalestineSupport';
 
 export const metadata: Metadata = {
-  title: 'CineMax — Watch Movies & Series Online',
+  title: 'CineMay — Watch Movies & Series Online',
   description:
-    'Stream trending movies and popular TV series for free on CineMax. Updated daily with the latest content.',
+    'Stream trending movies and popular TV series for free on CineMay. Updated daily with the latest content.',
 };
 
 const GENRES = [
@@ -37,7 +37,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     getTopRated('movie'),
   ]);
 
-  const hero = trending[0];
+  const heroIndex = Math.floor(Math.random() * Math.min(trending.length, 10));
+  const hero = trending[heroIndex];
 
   return (
     <>

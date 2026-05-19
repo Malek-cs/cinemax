@@ -139,7 +139,7 @@ export default function LoginPage() {
 
         <p className="text-center text-gray-600 text-xs mt-6">
           <Link href="/" className="text-gray-500 hover:text-white transition-colors">
-            ← Back to CineMax
+            ← Back to CineMay
           </Link>
         </p>
       </div>
