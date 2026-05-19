@@ -47,6 +47,12 @@ export default function EmbedPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Lock body scroll when CSS-fullscreen is active
+  useEffect(() => {
+    document.body.style.overflow = isFullscreen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [isFullscreen]);
+
   const src = SOURCES[sourceIdx];
   const baseUrl =
     type === 'movie'
@@ -64,18 +70,8 @@ export default function EmbedPlayer({
     return () => clearTimeout(t);
   }, [embedUrl]);
 
-  useEffect(() => {
-    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', onChange);
-    return () => document.removeEventListener('fullscreenchange', onChange);
-  }, []);
-
   function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
+    setIsFullscreen(prev => !prev);
   }
 
   return (
@@ -118,7 +114,11 @@ export default function EmbedPlayer({
       {/* Iframe player */}
       <div
         ref={containerRef}
-        className="relative w-full aspect-video bg-black rounded-xl shadow-2xl"
+        className={
+          isFullscreen
+            ? 'fixed inset-0 z-[9999] bg-black'
+            : 'relative w-full aspect-video bg-black rounded-xl shadow-2xl'
+        }
         style={{ overflow: 'clip' }}
       >
         {!loaded && (
