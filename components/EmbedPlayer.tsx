@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Source {
   label: string;
@@ -44,6 +44,8 @@ export default function EmbedPlayer({
   const [sourceIdx, setSourceIdx] = useState(0);
   const [arabicSubs, setArabicSubs] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const src = SOURCES[sourceIdx];
   const baseUrl =
@@ -61,6 +63,20 @@ export default function EmbedPlayer({
     const t = setTimeout(() => setLoaded(true), 5000);
     return () => clearTimeout(t);
   }, [embedUrl]);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
 
   return (
     <div className="space-y-2.5">
@@ -100,7 +116,11 @@ export default function EmbedPlayer({
       </div>
 
       {/* Iframe player */}
-      <div className="relative w-full aspect-video bg-black rounded-xl shadow-2xl" style={{ overflow: 'clip' }}>
+      <div
+        ref={containerRef}
+        className="relative w-full aspect-video bg-black rounded-xl shadow-2xl"
+        style={{ overflow: 'clip' }}
+      >
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0d0d14] z-10">
             <div className="w-10 h-10 border-2 border-[#e63946] border-t-transparent rounded-full animate-spin" />
@@ -114,9 +134,26 @@ export default function EmbedPlayer({
           allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
           referrerPolicy="origin"
-className="absolute inset-0 w-full h-full border-0"
+          className="absolute inset-0 w-full h-full border-0"
           onLoad={() => setLoaded(true)}
         />
+
+        {/* Fullscreen button — bottom right corner */}
+        <button
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'خروج من الشاشة الكاملة' : 'شاشة كاملة'}
+          className="absolute bottom-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-lg bg-black/60 hover:bg-black/90 text-white transition-all duration-200 backdrop-blur-sm"
+        >
+          {isFullscreen ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4m0 5H4m11 0h-5m5 0V4M9 15v5m0-5H4m11 5v-5m0 5h-5" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Info strip */}
