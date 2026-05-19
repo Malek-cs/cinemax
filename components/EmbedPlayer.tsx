@@ -114,6 +114,7 @@ export default function EmbedPlayer({
           allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
           referrerPolicy="origin"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-pointer-lock allow-forms"
           className="absolute inset-0 w-full h-full border-0"
           onLoad={() => setLoaded(true)}
         />
