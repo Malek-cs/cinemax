@@ -69,7 +69,7 @@ export default function EmbedPlayer({
         {/* Server buttons */}
         <div className="flex items-center gap-1.5">
           <span className="text-gray-500 text-xs ml-1 hidden sm:inline">سيرفر:</span>
-          {SOURCES.map((s, i) => (
+          {SOURCES.map((_s, i) => (
             <button
               key={i}
               onClick={() => { setSourceIdx(i); setLoaded(false); }}
@@ -100,7 +100,7 @@ export default function EmbedPlayer({
       </div>
 
       {/* Iframe player */}
-      <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
+      <div className="relative w-full aspect-video bg-black rounded-xl shadow-2xl" style={{ overflow: 'clip' }}>
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0d0d14] z-10">
             <div className="w-10 h-10 border-2 border-[#e63946] border-t-transparent rounded-full animate-spin" />
