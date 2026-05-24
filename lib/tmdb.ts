@@ -96,10 +96,18 @@ export async function getPopular(
 export async function getByGenre(
   type: 'movie' | 'tv',
   genreId: number,
-  page = 1
+  page = 1,
+  sortBy?: string,
+  extraParams?: Record<string, unknown>
 ): Promise<(Movie | Series)[]> {
+  const params: Record<string, unknown> = {
+    with_genres: genreId,
+    page,
+    ...extraParams,
+  };
+  if (sortBy) params.sort_by = sortBy;
   const { data } = await api.get<TMDBResponse<Movie | Series>>(`/discover/${type}`, {
-    params: withKey({ with_genres: genreId, page }),
+    params: withKey(params),
   });
   return data.results;
 }

@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import EmbedPlayer from './EmbedPlayer';
 import EpisodeSelector from './EpisodeSelector';
+import { saveToWatchHistory } from '@/lib/watchHistory';
 import type { Series } from '@/lib/types';
 
 interface WatchClientProps {
   tmdbId: string;
   type: 'movie' | 'tv';
   title: string;
+  posterPath?: string | null;
+  backdropPath?: string | null;
   series?: Series;
   initialSeason?: number;
   initialEpisode?: number;
@@ -18,12 +22,38 @@ export default function WatchClient({
   tmdbId,
   type,
   title,
+  posterPath,
+  backdropPath,
   series,
   initialSeason = 1,
   initialEpisode = 1,
 }: WatchClientProps) {
   const [season, setSeason] = useState(initialSeason);
   const [episode, setEpisode] = useState(initialEpisode);
+  const { data: session } = useSession();
+
+  // Track if we already saved this specific item to avoid repeated writes on re-render
+  const savedKey = useRef<string>('');
+
+  useEffect(() => {
+    const key = `${tmdbId}-${type}-${season}-${episode}`;
+    if (savedKey.current === key) return;
+    savedKey.current = key;
+
+    saveToWatchHistory(
+      {
+        id: parseInt(tmdbId, 10),
+        type,
+        title,
+        posterPath: posterPath ?? null,
+        backdropPath: backdropPath ?? null,
+        season: type === 'tv' ? season : undefined,
+        episode: type === 'tv' ? episode : undefined,
+        watchedAt: Date.now(),
+      },
+      session?.user?.email ?? undefined
+    );
+  }, [tmdbId, type, title, posterPath, backdropPath, season, episode, session]);
 
   function handleEpisodeSelect(s: number, e: number) {
     setSeason(s);

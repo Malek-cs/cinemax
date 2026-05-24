@@ -45,6 +45,8 @@ export default async function WatchPage({ params, searchParams }: Props) {
               tmdbId={id}
               type={isTV ? 'tv' : 'movie'}
               title={title}
+              posterPath={details.poster_path}
+              backdropPath={details.backdrop_path}
               series={isTV ? (details as Series) : undefined}
               initialSeason={initialSeason}
               initialEpisode={initialEpisode}
