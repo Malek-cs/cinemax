@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface Source {
   label: string;
@@ -44,6 +44,25 @@ export default function EmbedPlayer({
   const [sourceIdx, setSourceIdx] = useState(0);
   const [arabicSubs, setArabicSubs] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
   const src = SOURCES[sourceIdx];
   const baseUrl =
@@ -96,7 +115,7 @@ export default function EmbedPlayer({
       </div>
 
       {/* Iframe player */}
-      <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
+      <div ref={wrapperRef} className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl group/player">
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0d0d14] z-10">
             <div className="w-10 h-10 border-2 border-[#e63946] border-t-transparent rounded-full animate-spin" />
@@ -104,6 +123,7 @@ export default function EmbedPlayer({
           </div>
         )}
         <iframe
+          ref={iframeRef}
           key={embedUrl}
           src={embedUrl}
           title={title ?? 'Video Player'}
@@ -113,6 +133,22 @@ export default function EmbedPlayer({
           className="absolute inset-0 w-full h-full border-0"
           onLoad={() => setLoaded(true)}
         />
+        {/* Custom fullscreen button — works on PC where iframe's own button may be blocked */}
+        <button
+          onClick={toggleFullscreen}
+          className="absolute bottom-3 right-3 z-20 p-2 rounded-lg bg-black/60 text-white opacity-0 group-hover/player:opacity-100 transition-opacity duration-200 hover:bg-black/80"
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        >
+          {isFullscreen ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+            </svg>
+          )}
+        </button>
       </div>
 
       <p className="text-gray-600 text-[11px] text-center">
