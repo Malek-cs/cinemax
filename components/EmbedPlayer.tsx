@@ -12,20 +12,20 @@ interface Source {
 const SOURCES: Source[] = [
   {
     label: 'سيرفر 1',
-    movie: (id) => `https://vidsrc.icu/embed/movie/${id}`,
-    tv: (id, s, e) => `https://vidsrc.icu/embed/tv/${id}/${s}/${e}`,
-    arabicParam: 'sub_lang=ar&ds_langs=ar',
-  },
-  {
-    label: 'سيرفر 2',
     movie: (id) => `https://player.videasy.net/movie/${id}`,
     tv: (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,
     arabicParam: 'lang=ar&sub_lang=ar',
   },
   {
+    label: 'سيرفر 2',
+    movie: (id) => `https://vidlink.pro/movie/${id}`,
+    tv: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
+    arabicParam: 'lang=ar',
+  },
+  {
     label: 'سيرفر 3',
-    movie: (id) => `https://www.2embed.cc/embed/${id}`,
-    tv: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
+    movie: (id) => `https://moviesapi.club/movie/${id}`,
+    tv: (id, s, e) => `https://moviesapi.club/tv/${id}/${s}/${e}`,
     arabicParam: 'lang=ar',
   },
 ];
