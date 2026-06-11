@@ -11,18 +11,18 @@ interface Source {
 const SOURCES: Source[] = [
   {
     label: 'سيرفر 1',
-    movie: (id) => `https://vidsrc.pro/embed/movie/${id}`,
-    tv: (id, s, e) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`,
+    movie: (id) => `https://vidsrc.icu/embed/movie/${id}`,
+    tv: (id, s, e) => `https://vidsrc.icu/embed/tv/${id}/${s}/${e}`,
   },
   {
     label: 'سيرفر 2',
-    movie: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
-    tv: (id, s, e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`,
+    movie: (id) => `https://player.videasy.net/movie/${id}`,
+    tv: (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,
   },
   {
     label: 'سيرفر 3',
-    movie: (id) => `https://autoembed.cc/movie/tmdb-${id}`,
-    tv: (id, s, e) => `https://autoembed.cc/tv/tmdb-${id}-${s}-${e}`,
+    movie: (id) => `https://www.2embed.cc/embed/${id}`,
+    tv: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
   },
 ];
 
