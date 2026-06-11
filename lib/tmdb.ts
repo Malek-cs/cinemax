@@ -1,4 +1,5 @@
 import axios from 'axios';
+import https from 'https';
 import type { Movie, Series, Cast, Video, Genre, TMDBResponse, Season } from './types';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -9,7 +10,10 @@ function getApiKey(): string {
   return key;
 }
 
-const api = axios.create({ baseURL: BASE_URL });
+const api = axios.create({
+  baseURL: BASE_URL,
+  httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+});
 
 function withKey(params: Record<string, unknown> = {}) {
   return { api_key: getApiKey(), ...params };

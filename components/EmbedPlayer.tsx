@@ -11,8 +11,8 @@ interface Source {
 const SOURCES: Source[] = [
   {
     label: 'سيرفر 1',
-    movie: (id) => `https://vidsrc.me/embed/movie?tmdb=${id}`,
-    tv: (id, s, e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
+    movie: (id) => `https://vidsrc.pro/embed/movie/${id}`,
+    tv: (id, s, e) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`,
   },
   {
     label: 'سيرفر 2',
