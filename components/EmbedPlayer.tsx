@@ -6,6 +6,7 @@ interface Source {
   label: string;
   movie: (id: string) => string;
   tv: (id: string, s: number, e: number) => string;
+  arabicParam: string;
 }
 
 const SOURCES: Source[] = [
@@ -13,16 +14,19 @@ const SOURCES: Source[] = [
     label: 'سيرفر 1',
     movie: (id) => `https://vidsrc.icu/embed/movie/${id}`,
     tv: (id, s, e) => `https://vidsrc.icu/embed/tv/${id}/${s}/${e}`,
+    arabicParam: 'sub_lang=ar&ds_langs=ar',
   },
   {
     label: 'سيرفر 2',
     movie: (id) => `https://player.videasy.net/movie/${id}`,
     tv: (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,
+    arabicParam: 'lang=ar&sub_lang=ar',
   },
   {
     label: 'سيرفر 3',
     movie: (id) => `https://www.2embed.cc/embed/${id}`,
     tv: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
+    arabicParam: 'lang=ar',
   },
 ];
 
@@ -71,7 +75,7 @@ export default function EmbedPlayer({
       : src.tv(tmdbId, season, episode);
 
   const embedUrl = arabicSubs
-    ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}ds_langs=ar&sub_lang=ar`
+    ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${src.arabicParam}`
     : baseUrl;
 
   useEffect(() => {
@@ -153,7 +157,7 @@ export default function EmbedPlayer({
 
       <p className="text-gray-600 text-[11px] text-center">
         {arabicSubs
-          ? '✓ الترجمة العربية مفعّلة — اختر "Arabic" من قائمة الترجمة داخل المشغّل إن لم تظهر تلقائياً'
+          ? '✓ الترجمة العربية مفعّلة تلقائياً'
           : 'إذا لم يعمل السيرفر، جرّب سيرفراً آخر أو فعّل الترجمة العربية'}
       </p>
     </div>
