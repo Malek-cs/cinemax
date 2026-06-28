@@ -19,7 +19,11 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="w-full bg-[#0a0a0f]/95 backdrop-blur-md border-b border-white/5 shadow-lg shadow-black/20">
+    <nav className={`w-full transition-all duration-500 ${
+      scrolled
+        ? 'bg-[#0a0a0f]/95 backdrop-blur-md border-b border-white/5 shadow-lg shadow-black/20'
+        : 'bg-gradient-to-b from-black/70 to-transparent border-b border-transparent'
+    }`}>
       <div className="flex items-center justify-between px-4 md:px-10 h-14 md:h-16">
         {/* Left: Logo + desktop nav links */}
         <div className="flex items-center gap-6">

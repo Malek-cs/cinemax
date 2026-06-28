@@ -99,6 +99,9 @@ export default function ContinueWatchingRow() {
                   {item.type === 'movie' ? 'Movie' : 'Series'}
                 </div>
 
+                {/* Watched progress indicator */}
+                <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#e63946]/80" />
+
                 {/* Season / Episode badge for TV */}
                 {item.type === 'tv' && (
                   <div className="absolute bottom-1.5 left-1.5 bg-[#e63946]/90 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">

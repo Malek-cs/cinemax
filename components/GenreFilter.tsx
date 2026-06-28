@@ -35,8 +35,8 @@ export default function GenreFilter({
           onClick={() => handleGenreChange(genre.id)}
           className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
             activeGenreId === genre.id
-              ? 'bg-[#e63946] text-white'
-              : 'bg-[#1a1a24] text-gray-400 hover:bg-[#2a2a34] hover:text-white'
+              ? 'bg-[#e63946] text-white shadow-lg shadow-[#e63946]/40 scale-105'
+              : 'bg-[#1a1a24] text-gray-400 hover:bg-[#2a2a34] hover:text-white hover:scale-105'
           }`}
         >
           {genre.name}

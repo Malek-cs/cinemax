@@ -27,7 +27,7 @@ export default function HeroSection({ item }: HeroSectionProps) {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-top"
+          className="object-cover object-top animate-ken-burns"
         />
       ) : (
         <div className="absolute inset-0 bg-[#111118]" />

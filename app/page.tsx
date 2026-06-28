@@ -5,6 +5,8 @@ import MovieRow from '@/components/MovieRow';
 import GenreFilter from '@/components/GenreFilter';
 import PalestineSupport from '@/components/PalestineSupport';
 import ContinueWatchingRow from '@/components/ContinueWatchingRow';
+import WatchlistRow from '@/components/WatchlistRow';
+import FadeInSection from '@/components/FadeInSection';
 
 export const metadata: Metadata = {
   title: 'CineMay — Watch Movies & Series Online',
@@ -81,12 +83,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <div className="space-y-10 py-10">
         {/* Continue Watching — client component, only visible when there's history */}
-        <ContinueWatchingRow />
+        <FadeInSection delay={0}>
+          <ContinueWatchingRow />
+        </FadeInSection>
+
+        {/* My List — client component, only visible when watchlist has items */}
+        <FadeInSection delay={0}>
+          <WatchlistRow />
+        </FadeInSection>
 
         {/* Genre filter tabs */}
-        <div className="px-4 md:px-8">
-          <GenreFilter genres={GENRES} activeGenreId={activeGenreId} basePath="/" />
-        </div>
+        <FadeInSection delay={60}>
+          <div className="px-4 md:px-8">
+            <GenreFilter genres={GENRES} activeGenreId={activeGenreId} basePath="/" />
+          </div>
+        </FadeInSection>
 
         {/* Section label when a genre is active */}
         {activeGenreId && activeGenreName && (
@@ -98,43 +109,51 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </div>
         )}
 
-        <MovieRow
-          title={activeGenreId ? `Trending — ${activeGenreName}` : 'Trending Now'}
-          items={trending.slice(0, 13).filter((_, i) => i !== heroIndex)}
-        />
+        <FadeInSection delay={0}>
+          <MovieRow
+            title={activeGenreId ? `Trending — ${activeGenreName}` : 'Trending Now'}
+            items={trending.slice(0, 13).filter((_, i) => i !== heroIndex)}
+          />
+        </FadeInSection>
 
-        <MovieRow
-          title={activeGenreId ? `Popular ${activeGenreName} Movies` : 'Popular Movies'}
-          items={popularMovies.slice(0, 12)}
-          type="movie"
-          viewAllHref={
-            activeGenreId
-              ? `/search?type=movie&genre=${activeGenreId}`
-              : '/search?type=movie'
-          }
-        />
+        <FadeInSection delay={0}>
+          <MovieRow
+            title={activeGenreId ? `Popular ${activeGenreName} Movies` : 'Popular Movies'}
+            items={popularMovies.slice(0, 12)}
+            type="movie"
+            viewAllHref={
+              activeGenreId
+                ? `/search?type=movie&genre=${activeGenreId}`
+                : '/search?type=movie'
+            }
+          />
+        </FadeInSection>
 
-        <MovieRow
-          title={activeGenreId ? `Popular ${activeGenreName} Series` : 'Popular Series'}
-          items={popularSeries.slice(0, 12)}
-          type="tv"
-          viewAllHref={
-            activeGenreId
-              ? `/search?type=tv&genre=${activeGenreId}`
-              : '/search?type=tv'
-          }
-        />
+        <FadeInSection delay={0}>
+          <MovieRow
+            title={activeGenreId ? `Popular ${activeGenreName} Series` : 'Popular Series'}
+            items={popularSeries.slice(0, 12)}
+            type="tv"
+            viewAllHref={
+              activeGenreId
+                ? `/search?type=tv&genre=${activeGenreId}`
+                : '/search?type=tv'
+            }
+          />
+        </FadeInSection>
 
-        <MovieRow
-          title={activeGenreId ? `Top Rated ${activeGenreName} Movies` : 'Top Rated Movies'}
-          items={topRated.slice(0, 12)}
-          type="movie"
-          viewAllHref={
-            activeGenreId
-              ? `/search?type=movie&genre=${activeGenreId}`
-              : '/search?type=movie'
-          }
-        />
+        <FadeInSection delay={0}>
+          <MovieRow
+            title={activeGenreId ? `Top Rated ${activeGenreName} Movies` : 'Top Rated Movies'}
+            items={topRated.slice(0, 12)}
+            type="movie"
+            viewAllHref={
+              activeGenreId
+                ? `/search?type=movie&genre=${activeGenreId}`
+                : '/search?type=movie'
+            }
+          />
+        </FadeInSection>
       </div>
     </>
   );

@@ -15,7 +15,10 @@ export default function MovieRow({ title, items, type, viewAllHref }: MovieRowPr
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between px-4 md:px-8">
-        <h2 className="text-white text-xl md:text-2xl font-bold">{title}</h2>
+        <h2 className="text-white text-xl md:text-2xl font-bold flex items-center gap-3">
+            <span className="w-1 h-6 bg-[#e63946] rounded-full inline-block flex-shrink-0" />
+            {title}
+          </h2>
         {viewAllHref && (
           <Link
             href={viewAllHref}
@@ -28,7 +31,7 @@ export default function MovieRow({ title, items, type, viewAllHref }: MovieRowPr
           </Link>
         )}
       </div>
-      <div className="flex gap-3 overflow-x-auto px-4 md:px-8 pb-4 scrollbar-hide">
+      <div className="flex gap-3 overflow-x-auto px-4 md:px-8 pb-4 scrollbar-red">
         {items.map((item) => (
           <MovieCard key={item.id} item={item} type={type} />
         ))}

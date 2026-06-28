@@ -43,6 +43,35 @@ body {
   text-transform: uppercase;
 }
 
+/* Ken Burns zoom-pan for hero backdrop */
+@keyframes kenBurns {
+  0%   { transform: scale(1)    translate(0,     0);    }
+  50%  { transform: scale(1.08) translate(-1%,  0.5%); }
+  100% { transform: scale(1.05) translate(1%,  -0.5%); }
+}
+.animate-ken-burns {
+  animation: kenBurns 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Fade-in-up for section rows */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.55s ease forwards;
+}
+
+/* Thin red scrollbar for movie rows */
+.scrollbar-red {
+  scrollbar-width: thin;
+  scrollbar-color: #e63946 transparent;
+}
+.scrollbar-red::-webkit-scrollbar       { height: 3px; }
+.scrollbar-red::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-red::-webkit-scrollbar-thumb { background: #e63946; border-radius: 9999px; }
+
 /* Line clamp utilities */
 .line-clamp-2 {
   display: -webkit-box;

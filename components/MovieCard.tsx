@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getImageUrl, getRatingColor } from '@/lib/utils';
 import type { Movie, Series } from '@/lib/types';
+import WatchlistButton from './WatchlistButton';
 
 interface MovieCardProps {
   item: (Movie | Series) & { _type?: string };
@@ -60,10 +61,15 @@ export default function MovieCard({ item, type }: MovieCardProps) {
         <div className="absolute top-1.5 left-1.5 bg-black/60 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wider">
           {mediaType === 'movie' ? 'Movie' : 'Series'}
         </div>
+
+        {/* Watchlist button — top right, visible on hover */}
+        <div className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <WatchlistButton id={item.id} type={mediaType} title={title} posterPath={item.poster_path ?? null} />
+        </div>
       </div>
 
       <div className="mt-1.5 px-0.5">
-        <h3 className="text-white text-xs font-medium truncate">{title}</h3>
+        <h3 className="text-white group-hover:text-[#e63946] transition-colors duration-200 text-xs font-medium truncate">{title}</h3>
         <p className="text-gray-500 text-[10px] mt-0.5">
           {date ? new Date(date).getFullYear() : 'N/A'}
         </p>
