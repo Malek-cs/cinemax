@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { isInWatchlist, toggleWatchlist } from '@/lib/watchlist';
+import { useToast } from './ToastProvider';
 
 interface WatchlistButtonProps {
   id: number;
@@ -12,6 +13,7 @@ interface WatchlistButtonProps {
 
 export default function WatchlistButton({ id, type, title, posterPath }: WatchlistButtonProps) {
   const [isListed, setIsListed] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     setIsListed(isInWatchlist(id, type));
@@ -22,6 +24,7 @@ export default function WatchlistButton({ id, type, title, posterPath }: Watchli
     e.stopPropagation();
     const next = toggleWatchlist({ id, type, title, posterPath });
     setIsListed(next);
+    addToast(next ? 'Added to My List' : 'Removed from My List', next ? 'success' : 'info');
   }
 
   return (

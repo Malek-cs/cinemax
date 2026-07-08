@@ -6,27 +6,28 @@ interface Source {
   label: string;
   movie: (id: string) => string;
   tv: (id: string, s: number, e: number) => string;
-  arabicParam: string;
 }
 
 const SOURCES: Source[] = [
   {
     label: 'سيرفر 1',
-    movie: (id) => `https://player.videasy.net/movie/${id}`,
-    tv: (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,
-    arabicParam: 'lang=ar&sub_lang=ar',
+    movie: (id) => `https://vidlink.pro/movie/${id}?lang=ar`,
+    tv: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}?lang=ar`,
   },
   {
     label: 'سيرفر 2',
-    movie: (id) => `https://vidlink.pro/movie/${id}`,
-    tv: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
-    arabicParam: 'lang=ar',
+    movie: (id) => `https://player.videasy.net/movie/${id}?lang=ar&sub_lang=ar`,
+    tv: (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}?lang=ar&sub_lang=ar`,
   },
   {
     label: 'سيرفر 3',
-    movie: (id) => `https://moviesapi.club/movie/${id}`,
-    tv: (id, s, e) => `https://moviesapi.club/tv/${id}/${s}/${e}`,
-    arabicParam: 'lang=ar',
+    movie: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
+    tv: (id, s, e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`,
+  },
+  {
+    label: 'سيرفر 4',
+    movie: (id) => `https://embed.su/embed/movie/${id}`,
+    tv: (id, s, e) => `https://embed.su/embed/tv/${id}/${s}/${e}`,
   },
 ];
 
@@ -46,7 +47,6 @@ export default function EmbedPlayer({
   title,
 }: EmbedPlayerProps) {
   const [sourceIdx, setSourceIdx] = useState(0);
-  const [arabicSubs, setArabicSubs] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -69,14 +69,10 @@ export default function EmbedPlayer({
   }, []);
 
   const src = SOURCES[sourceIdx];
-  const baseUrl =
+  const embedUrl =
     type === 'movie'
       ? src.movie(tmdbId)
       : src.tv(tmdbId, season, episode);
-
-  const embedUrl = arabicSubs
-    ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${src.arabicParam}`
-    : baseUrl;
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 5000);
@@ -105,16 +101,14 @@ export default function EmbedPlayer({
         </div>
 
         <button
-          onClick={() => { setArabicSubs(!arabicSubs); setLoaded(false); }}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ml-auto ${
-            arabicSubs
-              ? 'bg-[#e63946]/20 text-[#e63946] border-[#e63946]/50 shadow-sm'
-              : 'bg-[#1a1a24] text-gray-400 border-white/10 hover:text-white'
-          }`}
-          title={arabicSubs ? 'تعطيل الترجمة العربية' : 'تفعيل الترجمة العربية'}
+          onClick={() => { setLoaded(false); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ml-auto bg-[#1a1a24] text-gray-400 border-white/10 hover:text-white hover:bg-[#252530]"
+          title="Refresh player"
         >
-          <span className="text-sm font-bold" style={{ fontFamily: 'serif' }}>ع</span>
-          <span>ترجمة عربية</span>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Refresh</span>
         </button>
       </div>
 
@@ -156,9 +150,7 @@ export default function EmbedPlayer({
       </div>
 
       <p className="text-gray-600 text-[11px] text-center">
-        {arabicSubs
-          ? '✓ الترجمة العربية مفعّلة تلقائياً'
-          : 'إذا لم يعمل السيرفر، جرّب سيرفراً آخر أو فعّل الترجمة العربية'}
+        If the server doesn&apos;t load, try another server or click Refresh
       </p>
     </div>
   );

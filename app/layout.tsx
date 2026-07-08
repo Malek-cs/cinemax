@@ -4,6 +4,9 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import GazaBanner from '@/components/GazaBanner';
 import SessionProvider from '@/components/SessionProvider';
+import { ToastProvider } from '@/components/ToastProvider';
+import BackToTop from '@/components/BackToTop';
+import BottomNav from '@/components/BottomNav';
 
 const dmSans = DM_Sans({ subsets: ['latin'] });
 
@@ -32,18 +35,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={dmSans.className}>
       <body className="bg-[#0a0a0f] text-white min-h-screen">
         <SessionProvider>
-          {/* Sticky header: Gaza banner + Navbar stacked together */}
-          <div className="sticky top-0 z-50">
-            <GazaBanner />
-            <Navbar />
-          </div>
-          <main>{children}</main>
-          <footer className="border-t border-white/5 mt-16 py-8 px-4 text-center text-gray-600 text-sm">
-            <p>© {new Date().getFullYear()} CineMay. All rights reserved.</p>
-            <p className="mt-1 text-xs text-gray-700">
-              Powered by Stinson boy.
-            </p>
-          </footer>
+          <ToastProvider>
+            {/* Sticky header: Gaza banner + Navbar stacked together */}
+            <div className="sticky top-0 z-50">
+              <GazaBanner />
+              <Navbar />
+            </div>
+            <main className="pb-16 md:pb-0">{children}</main>
+            <footer className="border-t border-white/5 mt-16 py-8 px-4 text-center text-gray-600 text-sm">
+              <p>© {new Date().getFullYear()} CineMay. All rights reserved.</p>
+              <p className="mt-1 text-xs text-gray-700">Powered by Stinson boy.</p>
+            </footer>
+            <BackToTop />
+            <BottomNav />
+          </ToastProvider>
         </SessionProvider>
       </body>
     </html>

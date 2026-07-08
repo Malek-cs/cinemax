@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { getSeriesDetails, getCast, getSimilar, getVideos, getSeasonDetails } from '@/lib/tmdb';
 import { getImageUrl, formatDate, getRatingColor } from '@/lib/utils';
 import MovieRow from '@/components/MovieRow';
+import TrailerButton from '@/components/TrailerButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -118,17 +119,16 @@ export default async function SeriesPage({ params }: Props) {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                {trailer && (
-                  <Link
-                    href={`/watch/${series.id}?type=tv`}
-                    className="flex items-center gap-2 bg-[#e63946] hover:bg-[#c1121f] text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg shadow-[#e63946]/30"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                    Watch Now
-                  </Link>
-                )}
+                <Link
+                  href={`/watch/${series.id}?type=tv`}
+                  className="flex items-center gap-2 bg-[#e63946] hover:bg-[#c1121f] text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg shadow-[#e63946]/30"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  Watch Now
+                </Link>
+                {trailer && <TrailerButton videoKey={trailer.key} title={series.name} />}
               </div>
             </div>
           </div>
