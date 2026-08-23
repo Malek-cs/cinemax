@@ -5,6 +5,7 @@ import { getMovieDetails, getCast, getSimilar, getVideos } from '@/lib/tmdb';
 import { getImageUrl, formatRuntime, formatDate, getRatingColor } from '@/lib/utils';
 import MovieRow from '@/components/MovieRow';
 import TrailerButton from '@/components/TrailerButton';
+import ShareCardButton from '@/components/ShareCardButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -36,6 +37,7 @@ export default async function MoviePage({ params }: Props) {
   ]);
 
   const trailer = videos.find((v) => v.type === 'Trailer' && v.site === 'YouTube') ?? videos[0];
+  const releaseYear = movie.release_date ? movie.release_date.split('-')[0] : '2026';
 
   return (
     <>
@@ -74,8 +76,10 @@ export default async function MoviePage({ params }: Props) {
               {movie.genres && movie.genres.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {movie.genres.slice(0, 3).map((g) => (
-                    <span key={g.id}
-                      className="bg-[#e63946]/15 text-[#e63946] text-[10px] md:text-xs px-2 py-0.5 rounded-full border border-[#e63946]/30">
+                    <span
+                      key={g.id}
+                      className="bg-[#e63946]/15 text-[#e63946] text-[10px] md:text-xs px-2 py-0.5 rounded-full border border-[#e63946]/30"
+                    >
                       {g.name}
                     </span>
                   ))}
@@ -94,7 +98,10 @@ export default async function MoviePage({ params }: Props) {
 
               {/* Meta */}
               <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-300 mb-4">
-                <span className="font-bold md:text-base" style={{ color: getRatingColor(movie.vote_average) }}>
+                <span
+                  className="font-bold md:text-base"
+                  style={{ color: getRatingColor(movie.vote_average) }}
+                >
                   ★ {movie.vote_average.toFixed(1)}
                 </span>
                 <span className="text-gray-500 hidden sm:inline">
@@ -109,7 +116,8 @@ export default async function MoviePage({ params }: Props) {
                 {movie.runtime && <span>{formatRuntime(movie.runtime)}</span>}
               </div>
 
-              <div className="flex flex-wrap gap-2.5">
+              {/* Actions: Watch, Trailer & Share */}
+              <div className="flex flex-wrap items-center gap-2.5">
                 <Link
                   href={`/watch/${movie.id}`}
                   className="inline-flex items-center gap-2 bg-[#e63946] hover:bg-[#c1121f] text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-all duration-200 active:scale-95 shadow-lg shadow-[#e63946]/30"
@@ -120,6 +128,13 @@ export default async function MoviePage({ params }: Props) {
                   Watch Now
                 </Link>
                 {trailer && <TrailerButton videoKey={trailer.key} title={movie.title} />}
+                <ShareCardButton
+                  title={movie.title}
+                  posterPath={movie.poster_path}
+                  rating={movie.vote_average}
+                  year={releaseYear}
+                  type="movie"
+                />
               </div>
             </div>
           </div>
@@ -150,10 +165,14 @@ export default async function MoviePage({ params }: Props) {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-2xl">👤</div>
+                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-2xl">
+                        👤
+                      </div>
                     )}
                   </div>
-                  <p className="text-white text-[10px] md:text-xs font-semibold truncate">{member.name}</p>
+                  <p className="text-white text-[10px] md:text-xs font-semibold truncate">
+                    {member.name}
+                  </p>
                   <p className="text-gray-500 text-[10px] truncate mt-0.5">{member.character}</p>
                 </div>
               ))}
