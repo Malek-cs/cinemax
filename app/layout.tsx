@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
-import GazaBanner from '@/components/GazaBanner';
 import SessionProvider from '@/components/SessionProvider';
 import { ToastProvider } from '@/components/ToastProvider';
 import { LanguageProvider } from '@/context/LanguageContext';
@@ -38,9 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProvider>
           <LanguageProvider>
             <ToastProvider>
-              {/* Sticky header: Gaza banner + Navbar stacked together */}
+              {/* Header */}
               <div className="sticky top-0 z-50">
-                <GazaBanner />
                 <Navbar />
               </div>
               <main className="pb-16 md:pb-0">{children}</main>

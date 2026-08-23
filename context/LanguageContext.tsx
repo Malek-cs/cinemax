@@ -16,8 +16,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('ar');
 
   useEffect(() => {
-    const savedLang = localStorage.getItem('cinemax_lang') as Language;
-    if (savedLang) {
+    const savedLang = localStorage.getItem('cinemax_lang');
+    if (savedLang === 'ar' || savedLang === 'en') {
       setLanguage(savedLang);
       document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
       document.documentElement.setAttribute('lang', savedLang);
@@ -25,7 +25,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleLanguage = () => {
-    const nextLang = language === 'ar' ? 'en' : 'ar';
+    const nextLang: Language = language === 'ar' ? 'en' : 'ar';
     setLanguage(nextLang);
     localStorage.setItem('cinemax_lang', nextLang);
     document.documentElement.setAttribute('dir', nextLang === 'ar' ? 'rtl' : 'ltr');
