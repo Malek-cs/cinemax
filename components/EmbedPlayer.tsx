@@ -61,6 +61,10 @@ export default function EmbedPlayer({
   const [sourceIdx, setSourceIdx] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Netflix Next Episode Overlay State
+  const [showNextPrompt, setShowNextPrompt] = useState(false);
+  const [countdown, setCountdown] = useState(10);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -91,10 +95,50 @@ export default function EmbedPlayer({
     return () => clearTimeout(t);
   }, [embedUrl]);
 
-  const goToNextEpisode = () => {
+  const goToNextEpisode = useCallback(() => {
+    setShowNextPrompt(false);
     setLoaded(false);
-    router.push(`/watch/${tmdbId}?type=tv&s=${season}&e=${episode + 1}`);
-  };
+    router.push(`/watch/${tmdbId}?type=tv&season=${season}&episode=${episode + 1}`);
+  }, [router, tmdbId, season, episode]);
+
+  // الاستماع للرسائل المنبثقة من مشغلات الـ Iframe عند انتهاء الفيديو
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (
+          data?.event === 'ended' ||
+          data?.type === 'PLAYER_ENDED' ||
+          data?.status === 'ended'
+        ) {
+          if (type === 'tv' && episode < totalEpisodes) {
+            setShowNextPrompt(true);
+          }
+        }
+      } catch {
+        // Ignore non-json postMessages
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [type, episode, totalEpisodes]);
+
+  // العداد التنازلي التلقائي عند ظهور البانر
+  useEffect(() => {
+    if (!showNextPrompt) return;
+
+    if (countdown <= 0) {
+      goToNextEpisode();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [showNextPrompt, countdown, goToNextEpisode]);
 
   return (
     <div className="space-y-2.5">
@@ -120,15 +164,17 @@ export default function EmbedPlayer({
           ))}
         </div>
 
-        {/* Next Episode Button */}
-        {type === 'tv' && (
+        {/* زر التبديل اليدوي في الأعلى */}
+        {type === 'tv' && episode < totalEpisodes && (
           <button
-            onClick={goToNextEpisode}
-            disabled={episode >= totalEpisodes}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#e63946] hover:bg-[#c1121f] disabled:opacity-40 text-white transition-all shadow-md shadow-[#e63946]/20"
+            onClick={() => {
+              setCountdown(10);
+              setShowNextPrompt(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#1a1a24] hover:bg-[#e63946] text-white border border-white/10 hover:border-transparent transition-all duration-200"
             title="Next Episode"
           >
-            <span>Next Episode ({episode + 1})</span>
+            <span>Next Ep ({episode + 1})</span>
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -154,7 +200,7 @@ export default function EmbedPlayer({
         </button>
       </div>
 
-      {/* Iframe player */}
+      {/* Iframe player container */}
       <div
         ref={wrapperRef}
         className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl group/player"
@@ -165,6 +211,7 @@ export default function EmbedPlayer({
             <p className="text-gray-500 text-sm">Loading...</p>
           </div>
         )}
+
         <iframe
           ref={iframeRef}
           key={embedUrl}
@@ -176,6 +223,60 @@ export default function EmbedPlayer({
           className="absolute inset-0 w-full h-full border-0"
           onLoad={() => setLoaded(true)}
         />
+
+        {/* بطاقة نتفلكس العائمة داخل المشغل (Netflix-style Next Episode Card) */}
+        {showNextPrompt && type === 'tv' && episode < totalEpisodes && (
+          <div className="absolute bottom-12 right-6 z-30 animate-in fade-in slide-in-from-bottom-5 duration-300">
+            <div className="bg-[#12121a]/95 backdrop-blur-md border border-white/15 p-4 rounded-2xl shadow-2xl shadow-black/80 max-w-[280px] sm:max-w-[320px] text-left">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#e63946]">
+                  Playing Next in {countdown}s
+                </span>
+                <button
+                  onClick={() => setShowNextPrompt(false)}
+                  className="text-gray-400 hover:text-white text-xs p-1"
+                  title="Cancel"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <h4 className="text-white text-sm font-bold truncate mb-1">
+                {title ?? 'Series'}
+              </h4>
+              <p className="text-gray-400 text-xs mb-3">
+                Season {season} · Episode {episode + 1}
+              </p>
+
+              {/* Progress Bar للعداد التنازلي */}
+              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-3">
+                <div
+                  className="h-full bg-[#e63946] transition-all duration-1000 ease-linear"
+                  style={{ width: `${((10 - countdown) / 10) * 100}%` }}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={goToNextEpisode}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-[#e63946] hover:bg-[#c1121f] text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-[#e63946]/30"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  <span>Play Now</span>
+                </button>
+                <button
+                  onClick={() => setShowNextPrompt(false)}
+                  className="py-2 px-3 bg-[#1a1a24] hover:bg-[#252535] text-gray-300 text-xs font-semibold rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Custom fullscreen button */}
         <button
           onClick={toggleFullscreen}
