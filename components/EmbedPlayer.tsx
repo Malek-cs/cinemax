@@ -62,9 +62,10 @@ export default function EmbedPlayer({
   const [loaded, setLoaded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Netflix Next Episode Overlay State
-  const [showNextPrompt, setShowNextPrompt] = useState(false);
-  const [countdown, setCountdown] = useState(10);
+  // Netflix Next Episode States
+  const [showNextOverlay, setShowNextOverlay] = useState(false);
+  const [countdown, setCountdown] = useState(8);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -95,29 +96,39 @@ export default function EmbedPlayer({
     return () => clearTimeout(t);
   }, [embedUrl]);
 
+  // دالة الانتقال للحلقة التالية
   const goToNextEpisode = useCallback(() => {
-    setShowNextPrompt(false);
+    setShowNextOverlay(false);
     setLoaded(false);
     router.push(`/watch/${tmdbId}?type=tv&season=${season}&episode=${episode + 1}`);
   }, [router, tmdbId, season, episode]);
 
-  // الاستماع للرسائل عند انتهاء الفيديو
+  // الاستماع لانتهاء الفيديو من مختلف سيرفرات الـ Iframe الخارجية
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (
-          data?.event === 'ended' ||
-          data?.type === 'PLAYER_ENDED' ||
-          data?.status === 'ended'
-        ) {
-          if (type === 'tv' && episode < totalEpisodes) {
-            setCountdown(10);
-            setShowNextPrompt(true);
+        let msg = event.data;
+        if (typeof msg === 'string') {
+          try {
+            msg = JSON.parse(msg);
+          } catch {
+            // ليست بصيغة JSON
           }
         }
+
+        // الكشف عن إشارات نهاية الحلقة من السيرفرات (VidSrc, MultiEmbed, VideoJS events)
+        const isEnded =
+          msg?.event === 'ended' ||
+          msg?.type === 'PLAYER_ENDED' ||
+          msg?.event === 'timeupdate' && msg?.currentTime > 0 && (msg?.duration - msg?.currentTime <= 15) ||
+          msg === 'ended' ||
+          msg?.status === 'ended';
+
+        if (isEnded && type === 'tv' && episode < totalEpisodes) {
+          setShowNextOverlay(true);
+        }
       } catch {
-        // Ignore non-json messages
+        // تجاهل أخطاء التفسير
       }
     };
 
@@ -125,14 +136,14 @@ export default function EmbedPlayer({
     return () => window.removeEventListener('message', handleMessage);
   }, [type, episode, totalEpisodes]);
 
-  // العداد التنازلي التلقائي (مصحح بالكامل بدون خطأ ESLint)
+  // العداد التنازلي التلقائي (أوتوماتيكي 100%)
   useEffect(() => {
-    if (!showNextPrompt) return;
+    if (!showNextOverlay) return;
 
-    const timer = setInterval(() => {
+    const interval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
+          clearInterval(interval);
           setTimeout(() => {
             goToNextEpisode();
           }, 0);
@@ -142,12 +153,12 @@ export default function EmbedPlayer({
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [showNextPrompt, goToNextEpisode]);
+    return () => clearInterval(interval);
+  }, [showNextOverlay, goToNextEpisode]);
 
   return (
     <div className="space-y-2.5">
-      {/* Controls bar */}
+      {/* شريط السيرفرات والتحديث */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-1.5">
           <span className="text-gray-500 text-xs ml-1 hidden sm:inline">Server:</span>
@@ -157,6 +168,7 @@ export default function EmbedPlayer({
               onClick={() => {
                 setSourceIdx(i);
                 setLoaded(false);
+                setShowNextOverlay(false);
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
                 sourceIdx === i
@@ -169,26 +181,10 @@ export default function EmbedPlayer({
           ))}
         </div>
 
-        {/* زر التبديل اليدوي في الأعلى */}
-        {type === 'tv' && episode < totalEpisodes && (
-          <button
-            onClick={() => {
-              setCountdown(10);
-              setShowNextPrompt(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#1a1a24] hover:bg-[#e63946] text-white border border-white/10 hover:border-transparent transition-all duration-200"
-            title="Next Episode"
-          >
-            <span>Next Ep ({episode + 1})</span>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
-
         <button
           onClick={() => {
             setLoaded(false);
+            setShowNextOverlay(false);
           }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ml-auto bg-[#1a1a24] text-gray-400 border-white/10 hover:text-white hover:bg-[#252530]"
           title="Refresh player"
@@ -205,7 +201,7 @@ export default function EmbedPlayer({
         </button>
       </div>
 
-      {/* Iframe player container */}
+      {/* شاشة الفيديو والطبقة التفاعلية الداخلية */}
       <div
         ref={wrapperRef}
         className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl group/player"
@@ -229,42 +225,42 @@ export default function EmbedPlayer({
           onLoad={() => setLoaded(true)}
         />
 
-        {/* بطاقة نتفلكس العائمة */}
-        {showNextPrompt && type === 'tv' && episode < totalEpisodes && (
-          <div className="absolute bottom-12 right-6 z-30 animate-in fade-in slide-in-from-bottom-5 duration-300">
-            <div className="bg-[#12121a]/95 backdrop-blur-md border border-white/15 p-4 rounded-2xl shadow-2xl shadow-black/80 max-w-[280px] sm:max-w-[320px] text-left">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#e63946]">
-                  Playing Next in {countdown}s
+        {/* بطاقة Netflix التلقائية داخل المشغل مباشرة (Next Episode Overlay) */}
+        {showNextOverlay && type === 'tv' && episode < totalEpisodes && (
+          <div className="absolute bottom-6 right-6 z-30 animate-in fade-in zoom-in-95 duration-300">
+            <div className="bg-[#0e0e16]/95 backdrop-blur-md border border-white/20 p-4 rounded-2xl shadow-2xl shadow-black max-w-[280px] sm:max-w-[320px]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold tracking-wider text-[#e63946] uppercase">
+                  Next Episode in {countdown}s
                 </span>
                 <button
-                  onClick={() => setShowNextPrompt(false)}
+                  onClick={() => setShowNextOverlay(false)}
                   className="text-gray-400 hover:text-white text-xs p-1"
-                  title="Cancel"
+                  title="Dismiss"
                 >
                   ✕
                 </button>
               </div>
 
               <h4 className="text-white text-sm font-bold truncate mb-1">
-                {title ?? 'Series'}
+                {title ?? 'Next Episode'}
               </h4>
               <p className="text-gray-400 text-xs mb-3">
                 Season {season} · Episode {episode + 1}
               </p>
 
-              {/* Progress Bar */}
-              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-3">
+              {/* Progress Bar التنازلي التلقائي */}
+              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-3.5">
                 <div
                   className="h-full bg-[#e63946] transition-all duration-1000 ease-linear"
-                  style={{ width: `${((10 - countdown) / 10) * 100}%` }}
+                  style={{ width: `${((8 - countdown) / 8) * 100}%` }}
                 />
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={goToNextEpisode}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-[#e63946] hover:bg-[#c1121f] text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-[#e63946]/30"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-[#e63946] hover:bg-[#c1121f] text-white text-xs font-bold rounded-xl transition-colors shadow-lg shadow-[#e63946]/40"
                 >
                   <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
@@ -272,17 +268,17 @@ export default function EmbedPlayer({
                   <span>Play Now</span>
                 </button>
                 <button
-                  onClick={() => setShowNextPrompt(false)}
-                  className="py-2 px-3 bg-[#1a1a24] hover:bg-[#252535] text-gray-300 text-xs font-semibold rounded-lg transition-colors"
+                  onClick={() => setShowNextOverlay(false)}
+                  className="py-2 px-3 bg-[#1a1a24] hover:bg-[#252535] text-gray-300 text-xs font-semibold rounded-xl transition-colors"
                 >
-                  Cancel
+                  Stay
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Custom fullscreen button */}
+        {/* زر الـ Fullscreen المخصص */}
         <button
           onClick={toggleFullscreen}
           className="hidden md:block absolute bottom-3 right-3 z-20 p-2 rounded-lg bg-black/60 text-white opacity-0 group-hover/player:opacity-100 transition-opacity duration-200 hover:bg-black/80"
