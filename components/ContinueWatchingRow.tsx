@@ -1,6 +1,6 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -10,23 +10,23 @@ import { getImageUrl } from '@/lib/utils';
 
 export default function ContinueWatchingRow() {
   const { data: session } = useSession();
+  const [history, setHistory] = useState<WatchHistoryItem[]>([]);
+  const [isReady, setIsReady] = useState(false);
 
-  // جلب السجل بشكل متزامن وآمن من المتصفح بدون أخطاء ESLint أو Hydration
-  const history: WatchHistoryItem[] = useSyncExternalStore(
-    (callback) => {
-      window.addEventListener('storage', callback);
-      return () => window.removeEventListener('storage', callback);
-    },
-    () => getWatchHistory(session?.user?.email ?? undefined),
-    () => []
-  );
+  useEffect(() => {
+    // جلب البيانات من الـ LocalStorage بعد تحميل الصفحة
+    const userEmail = session?.user?.email ?? undefined;
+    const items = getWatchHistory(userEmail);
+    setHistory(items);
+    setIsReady(true);
+  }, [session?.user?.email]);
 
-  if (history.length === 0) return null;
+  if (!isReady || history.length === 0) return null;
 
   function handleRemove(id: number, type: 'movie' | 'tv') {
-    removeFromWatchHistory(id, type, session?.user?.email ?? undefined);
-    // إرسال حدث لتحديث الـ UI فوراً
-    window.dispatchEvent(new Event('storage'));
+    const userEmail = session?.user?.email ?? undefined;
+    removeFromWatchHistory(id, type, userEmail);
+    setHistory((prev) => prev.filter((h) => !(h.id === id && h.type === type)));
   }
 
   return (
@@ -65,10 +65,8 @@ export default function ContinueWatchingRow() {
                   </div>
                 )}
 
-                {/* Dark gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-                {/* Centered play button on hover */}
                 <Link
                   href={watchHref}
                   className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -84,7 +82,6 @@ export default function ContinueWatchingRow() {
                   </div>
                 </Link>
 
-                {/* Remove (×) button */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -96,22 +93,18 @@ export default function ContinueWatchingRow() {
                   ×
                 </button>
 
-                {/* Type badge */}
                 <div className="absolute top-1.5 left-1.5 bg-black/60 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wider">
                   {item.type === 'movie' ? 'Movie' : 'Series'}
                 </div>
 
-                {/* Watched progress indicator */}
                 <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#e63946]/80" />
 
-                {/* Season / Episode badge for TV */}
                 {item.type === 'tv' && (
                   <div className="absolute bottom-1.5 left-1.5 bg-[#e63946]/90 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">
                     S{item.season} · E{item.episode}
                   </div>
                 )}
 
-                {/* Continue label */}
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 translate-y-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <Link
                     href={watchHref}
