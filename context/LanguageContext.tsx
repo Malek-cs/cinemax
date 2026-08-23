@@ -15,21 +15,29 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('ar');
 
+  // تحديث اللغة من localStorage بعد التحميل الأول في المتصفح
   useEffect(() => {
     const savedLang = localStorage.getItem('cinemax_lang');
     if (savedLang === 'ar' || savedLang === 'en') {
-      setLanguage(savedLang);
-      document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
-      document.documentElement.setAttribute('lang', savedLang);
+      // استخدام setTimeout يحل تحذير ESLint ويمنع تعليق الـ Render
+      setTimeout(() => {
+        setLanguage(savedLang);
+      }, 0);
     }
   }, []);
 
+  // تحديث الـ DOM تلقائياً كلما تغيرت اللغة
+  useEffect(() => {
+    document.documentElement.setAttribute('dir', language === 'ar' ? 'rtl' : 'ltr');
+    document.documentElement.setAttribute('lang', language);
+  }, [language]);
+
   const toggleLanguage = () => {
-    const nextLang: Language = language === 'ar' ? 'en' : 'ar';
-    setLanguage(nextLang);
-    localStorage.setItem('cinemax_lang', nextLang);
-    document.documentElement.setAttribute('dir', nextLang === 'ar' ? 'rtl' : 'ltr');
-    document.documentElement.setAttribute('lang', nextLang);
+    setLanguage((prev) => {
+      const nextLang: Language = prev === 'ar' ? 'en' : 'ar';
+      localStorage.setItem('cinemax_lang', nextLang);
+      return nextLang;
+    });
   };
 
   return (
