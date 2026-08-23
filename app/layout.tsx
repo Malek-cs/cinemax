@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import GazaBanner from '@/components/GazaBanner';
 import SessionProvider from '@/components/SessionProvider';
 import { ToastProvider } from '@/components/ToastProvider';
+import { LanguageProvider } from '@/context/LanguageContext';
 import BackToTop from '@/components/BackToTop';
 import BottomNav from '@/components/BottomNav';
 
@@ -32,23 +33,25 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={dmSans.className}>
+    <html lang="ar" dir="rtl" className={dmSans.className}>
       <body className="bg-[#0a0a0f] text-white min-h-screen">
         <SessionProvider>
-          <ToastProvider>
-            {/* Sticky header: Gaza banner + Navbar stacked together */}
-            <div className="sticky top-0 z-50">
-              <GazaBanner />
-              <Navbar />
-            </div>
-            <main className="pb-16 md:pb-0">{children}</main>
-            <footer className="border-t border-white/5 mt-16 py-8 px-4 text-center text-gray-600 text-sm">
-              <p>© {new Date().getFullYear()} CineMay. All rights reserved.</p>
-              <p className="mt-1 text-xs text-gray-700">Powered by Stinson boy.</p>
-            </footer>
-            <BackToTop />
-            <BottomNav />
-          </ToastProvider>
+          <LanguageProvider>
+            <ToastProvider>
+              {/* Sticky header: Gaza banner + Navbar stacked together */}
+              <div className="sticky top-0 z-50">
+                <GazaBanner />
+                <Navbar />
+              </div>
+              <main className="pb-16 md:pb-0">{children}</main>
+              <footer className="border-t border-white/5 mt-16 py-8 px-4 text-center text-gray-600 text-sm">
+                <p>© {new Date().getFullYear()} CineMay. All rights reserved.</p>
+                <p className="mt-1 text-xs text-gray-700">Powered by Stinson boy.</p>
+              </footer>
+              <BackToTop />
+              <BottomNav />
+            </ToastProvider>
+          </LanguageProvider>
         </SessionProvider>
       </body>
     </html>

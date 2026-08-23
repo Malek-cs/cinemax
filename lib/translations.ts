@@ -1,0 +1,38 @@
+export type Language = 'ar' | 'en';
+
+export const translations = {
+  ar: {
+    home: 'الرئيسية',
+    movies: 'أفلام',
+    series: 'مسلسلات',
+    search: 'بحث عن فيلم أو مسلسل...',
+    signIn: 'تسجيل الدخول',
+    signOut: 'تسجيل الخروج',
+    watchNow: 'شاهد الآن',
+    trending: 'الأكثر تداولاً',
+    popularMovies: 'أفلام شائعة',
+    topRated: 'الأعلى تقييماً',
+    server: 'السيرفر',
+    refresh: 'إعادة تحميل',
+    loading: 'جاري التحميل...',
+    changeLang: 'English',
+    direction: 'rtl',
+  },
+  en: {
+    home: 'Home',
+    movies: 'Movies',
+    series: 'Series',
+    search: 'Search movies, series...',
+    signIn: 'Sign In',
+    signOut: 'Sign Out',
+    watchNow: 'Watch Now',
+    trending: 'Trending Now',
+    popularMovies: 'Popular Movies',
+    topRated: 'Top Rated',
+    server: 'Server',
+    refresh: 'Refresh',
+    loading: 'Loading...',
+    changeLang: 'العربية',
+    direction: 'ltr',
+  },
+};
