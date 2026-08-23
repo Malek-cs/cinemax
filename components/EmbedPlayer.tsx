@@ -101,7 +101,7 @@ export default function EmbedPlayer({
     router.push(`/watch/${tmdbId}?type=tv&season=${season}&episode=${episode + 1}`);
   }, [router, tmdbId, season, episode]);
 
-  // الاستماع للرسائل المنبثقة من مشغلات الـ Iframe عند انتهاء الفيديو
+  // الاستماع للرسائل عند انتهاء الفيديو
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
@@ -112,11 +112,12 @@ export default function EmbedPlayer({
           data?.status === 'ended'
         ) {
           if (type === 'tv' && episode < totalEpisodes) {
+            setCountdown(10);
             setShowNextPrompt(true);
           }
         }
       } catch {
-        // Ignore non-json postMessages
+        // Ignore non-json messages
       }
     };
 
@@ -124,21 +125,25 @@ export default function EmbedPlayer({
     return () => window.removeEventListener('message', handleMessage);
   }, [type, episode, totalEpisodes]);
 
-  // العداد التنازلي التلقائي عند ظهور البانر
+  // العداد التنازلي التلقائي (مصحح بالكامل بدون خطأ ESLint)
   useEffect(() => {
     if (!showNextPrompt) return;
 
-    if (countdown <= 0) {
-      goToNextEpisode();
-      return;
-    }
-
     const timer = setInterval(() => {
-      setCountdown((prev) => prev - 1);
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setTimeout(() => {
+            goToNextEpisode();
+          }, 0);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [showNextPrompt, countdown, goToNextEpisode]);
+  }, [showNextPrompt, goToNextEpisode]);
 
   return (
     <div className="space-y-2.5">
@@ -224,7 +229,7 @@ export default function EmbedPlayer({
           onLoad={() => setLoaded(true)}
         />
 
-        {/* بطاقة نتفلكس العائمة داخل المشغل (Netflix-style Next Episode Card) */}
+        {/* بطاقة نتفلكس العائمة */}
         {showNextPrompt && type === 'tv' && episode < totalEpisodes && (
           <div className="absolute bottom-12 right-6 z-30 animate-in fade-in slide-in-from-bottom-5 duration-300">
             <div className="bg-[#12121a]/95 backdrop-blur-md border border-white/15 p-4 rounded-2xl shadow-2xl shadow-black/80 max-w-[280px] sm:max-w-[320px] text-left">
@@ -248,7 +253,7 @@ export default function EmbedPlayer({
                 Season {season} · Episode {episode + 1}
               </p>
 
-              {/* Progress Bar للعداد التنازلي */}
+              {/* Progress Bar */}
               <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-3">
                 <div
                   className="h-full bg-[#e63946] transition-all duration-1000 ease-linear"
