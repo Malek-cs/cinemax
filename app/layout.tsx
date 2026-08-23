@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" className={dmSans.className}>
+    <html lang="en" dir="rtl" className={dmSans.className}>
       <body className="bg-[#0a0a0f] text-white min-h-screen">
         <SessionProvider>
           <LanguageProvider>
