@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -10,21 +10,23 @@ import { getImageUrl } from '@/lib/utils';
 
 export default function ContinueWatchingRow() {
   const { data: session } = useSession();
-  const [history, setHistory] = useState<WatchHistoryItem[]>([]);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    const items = getWatchHistory(session?.user?.email ?? undefined);
-    setHistory(items);
-  }, [session]);
+  // جلب السجل بشكل متزامن وآمن من المتصفح بدون أخطاء ESLint أو Hydration
+  const history: WatchHistoryItem[] = useSyncExternalStore(
+    (callback) => {
+      window.addEventListener('storage', callback);
+      return () => window.removeEventListener('storage', callback);
+    },
+    () => getWatchHistory(session?.user?.email ?? undefined),
+    () => []
+  );
 
-  // Don't render anything until client-side mount to avoid hydration mismatch
-  if (!mounted || history.length === 0) return null;
+  if (history.length === 0) return null;
 
   function handleRemove(id: number, type: 'movie' | 'tv') {
     removeFromWatchHistory(id, type, session?.user?.email ?? undefined);
-    setHistory((prev) => prev.filter((h) => !(h.id === id && h.type === type)));
+    // إرسال حدث لتحديث الـ UI فوراً
+    window.dispatchEvent(new Event('storage'));
   }
 
   return (
@@ -82,7 +84,7 @@ export default function ContinueWatchingRow() {
                   </div>
                 </Link>
 
-                {/* Remove (×) button — top right */}
+                {/* Remove (×) button */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -109,7 +111,7 @@ export default function ContinueWatchingRow() {
                   </div>
                 )}
 
-                {/* "Continue" label at bottom */}
+                {/* Continue label */}
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 translate-y-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <Link
                     href={watchHref}
