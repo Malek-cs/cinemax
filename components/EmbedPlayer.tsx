@@ -4,35 +4,47 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface Source {
   label: string;
-  movie: (id: string) => string;
-  tv: (id: string, s: number, e: number) => string;
+  // imdbId passed first so servers can prefer it; tmdbId always available as fallback
+  movie: (tmdbId: string, imdbId?: string) => string;
+  tv: (tmdbId: string, s: number, e: number, imdbId?: string) => string;
 }
 
 const SOURCES: Source[] = [
   {
+    // multiembed.mov — prefers IMDB ID for accurate non-English content
     label: 'سيرفر 1',
-    movie: (id) => `https://vidlink.pro/movie/${id}?lang=ar`,
-    tv: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}?lang=ar`,
+    movie: (tmdb, imdb) =>
+      imdb
+        ? `https://multiembed.mov/?video_id=${imdb}`
+        : `https://multiembed.mov/?video_id=${tmdb}&tmdb=1`,
+    tv: (tmdb, s, e, imdb) =>
+      imdb
+        ? `https://multiembed.mov/?video_id=${imdb}&s=${s}&e=${e}`
+        : `https://multiembed.mov/?video_id=${tmdb}&tmdb=1&s=${s}&e=${e}`,
   },
   {
+    // videasy.net — TMDB only, Arabic subtitles
     label: 'سيرفر 2',
-    movie: (id) => `https://player.videasy.net/movie/${id}?lang=ar&sub_lang=ar`,
-    tv: (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}?lang=ar&sub_lang=ar`,
+    movie: (tmdb) => `https://player.videasy.net/movie/${tmdb}?lang=ar&sub_lang=ar`,
+    tv: (tmdb, s, e) => `https://player.videasy.net/tv/${tmdb}/${s}/${e}?lang=ar&sub_lang=ar`,
   },
   {
+    // vidsrc.to — supports both IMDB and TMDB IDs natively
     label: 'سيرفر 3',
-    movie: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
-    tv: (id, s, e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`,
+    movie: (tmdb, imdb) => `https://vidsrc.to/embed/movie/${imdb ?? tmdb}`,
+    tv: (tmdb, s, e, imdb) => `https://vidsrc.to/embed/tv/${imdb ?? tmdb}/${s}/${e}`,
   },
   {
+    // embed.su — TMDB only
     label: 'سيرفر 4',
-    movie: (id) => `https://embed.su/embed/movie/${id}`,
-    tv: (id, s, e) => `https://embed.su/embed/tv/${id}/${s}/${e}`,
+    movie: (tmdb) => `https://embed.su/embed/movie/${tmdb}`,
+    tv: (tmdb, s, e) => `https://embed.su/embed/tv/${tmdb}/${s}/${e}`,
   },
 ];
 
 interface EmbedPlayerProps {
   tmdbId: string;
+  imdbId?: string;
   type: 'movie' | 'tv';
   season?: number;
   episode?: number;
@@ -41,6 +53,7 @@ interface EmbedPlayerProps {
 
 export default function EmbedPlayer({
   tmdbId,
+  imdbId,
   type,
   season = 1,
   episode = 1,
@@ -71,8 +84,8 @@ export default function EmbedPlayer({
   const src = SOURCES[sourceIdx];
   const embedUrl =
     type === 'movie'
-      ? src.movie(tmdbId)
-      : src.tv(tmdbId, season, episode);
+      ? src.movie(tmdbId, imdbId)
+      : src.tv(tmdbId, season, episode, imdbId);
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 5000);

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { redirect } from 'next/navigation';
 import { getMovieDetails, getSeriesDetails } from '@/lib/tmdb';
 import { getImageUrl, formatRuntime } from '@/lib/utils';
 import WatchClient from '@/components/WatchClient';
@@ -17,7 +18,12 @@ function getTitle(d: Movie | Series): string {
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { id } = await params;
   const { type } = await searchParams;
-  const details = type === 'tv' ? await getSeriesDetails(id) : await getMovieDetails(id);
+  let details: Movie | Series;
+  try {
+    details = type === 'tv' ? await getSeriesDetails(id) : await getMovieDetails(id);
+  } catch {
+    details = await getSeriesDetails(id).catch(() => ({ name: 'Unknown', overview: '' } as unknown as Series));
+  }
   return {
     title: `مشاهدة ${getTitle(details)}`,
     description: details.overview?.slice(0, 160),
@@ -29,10 +35,29 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const { type, season, episode } = await searchParams;
   const isTV = type === 'tv';
 
-  const details = isTV ? await getSeriesDetails(id) : await getMovieDetails(id);
+  let details: Movie | Series;
+  if (isTV) {
+    details = await getSeriesDetails(id);
+  } else {
+    try {
+      details = await getMovieDetails(id);
+    } catch {
+      // Not a movie — check if it's a TV show and redirect with correct type
+      try {
+        await getSeriesDetails(id);
+        redirect(`/watch/${id}?type=tv`);
+      } catch {
+        // Neither movie nor TV — 404
+        throw new Error(`Content not found: ${id}`);
+      }
+    }
+  }
   const title = getTitle(details);
   const initialSeason = season ? parseInt(season) : 1;
   const initialEpisode = episode ? parseInt(episode) : 1;
+  const imdbId = isTV
+    ? (details as Series).external_ids?.imdb_id
+    : (details as Movie).imdb_id;
 
   return (
     <div className="min-h-screen pt-14 md:pt-16 bg-[#0a0a0f]">
@@ -43,6 +68,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
           <div className="lg:col-span-2">
             <WatchClient
               tmdbId={id}
+              imdbId={imdbId}
               type={isTV ? 'tv' : 'movie'}
               title={title}
               posterPath={details.poster_path}

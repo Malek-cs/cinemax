@@ -36,7 +36,9 @@ export async function getMovieDetails(id: string | number): Promise<Movie> {
 }
 
 export async function getSeriesDetails(id: string | number): Promise<Series> {
-  const { data } = await api.get<Series>(`/tv/${id}`, { params: withKey() });
+  const { data } = await api.get<Series>(`/tv/${id}`, {
+    params: withKey({ append_to_response: 'external_ids' }),
+  });
   return data;
 }
 

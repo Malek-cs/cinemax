@@ -24,6 +24,7 @@ export interface Movie {
   status?: string;
   tagline?: string;
   production_companies?: ProductionCompany[];
+  imdb_id?: string;
 }
 
 export interface Episode {
@@ -66,6 +67,7 @@ export interface Series {
   episode_run_time?: number[];
   status?: string;
   tagline?: string;
+  external_ids?: { imdb_id?: string };
 }
 
 export interface Cast {

@@ -9,6 +9,7 @@ import type { Series } from '@/lib/types';
 
 interface WatchClientProps {
   tmdbId: string;
+  imdbId?: string;
   type: 'movie' | 'tv';
   title: string;
   posterPath?: string | null;
@@ -20,6 +21,7 @@ interface WatchClientProps {
 
 export default function WatchClient({
   tmdbId,
+  imdbId,
   type,
   title,
   posterPath,
@@ -75,6 +77,7 @@ export default function WatchClient({
 
       <EmbedPlayer
         tmdbId={tmdbId}
+        imdbId={imdbId}
         type={type}
         season={season}
         episode={episode}
