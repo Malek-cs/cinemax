@@ -30,6 +30,7 @@ export const metadata: Metadata = {
     description: 'Stream the latest movies and TV series on CineMay.',
   },
 };
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" dir="rtl" className={dmSans.className}>
