@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import SearchBar from './SearchBar';
 import Logo from './Logo';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { data: session } = useSession();
@@ -19,6 +21,11 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // إخفاء الـ Navbar تماماً عند تصفح أي صفحة من صفحات الأدمن
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <nav
