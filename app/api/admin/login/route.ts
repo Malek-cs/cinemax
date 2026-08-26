@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 const rateLimitMap = new Map<string, { count: number; lastAttempt: number }>();
-const MAX_ATTEMPTS = 10;
-const BLOCK_TIME_MS = 5 * 60 * 1000; // 5 دقائق حظر عند التكرار
+const MAX_ATTEMPTS = 5;
+const BLOCK_TIME_MS = 15 * 60 * 1000;
 
 function safeCompare(a: string, b: string): boolean {
   try {
@@ -18,36 +18,29 @@ function safeCompare(a: string, b: string): boolean {
 
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown-ip';
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
     const now = Date.now();
     const rateData = rateLimitMap.get(ip) || { count: 0, lastAttempt: now };
 
     if (rateData.count >= MAX_ATTEMPTS) {
       if (now - rateData.lastAttempt < BLOCK_TIME_MS) {
-        return NextResponse.json(
-          { error: 'Too many attempts. Please try again after 5 minutes.' },
-          { status: 429 }
-        );
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       rateData.count = 0;
     }
 
-    const { email, password } = await req.json();
-
-    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
-      return NextResponse.json({ error: 'Invalid credentials provided' }, { status: 400 });
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body.email !== 'string' || typeof body.password !== 'string') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { email, password } = body;
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
-    // Fallback في حال لم يتوفر المتغير في .env
     const secret = process.env.SESSION_SECRET || process.env.NEXTAUTH_SECRET;
 
-    if (!adminEmail || !adminPassword) {
-      return NextResponse.json(
-        { error: 'Server authentication is not configured in .env' },
-        { status: 500 }
-      );
+    if (!adminEmail || !adminPassword || !secret) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const isEmailValid = safeCompare(email.trim().toLowerCase(), adminEmail.toLowerCase());
@@ -57,15 +50,14 @@ export async function POST(req: Request) {
       rateData.count += 1;
       rateData.lastAttempt = now;
       rateLimitMap.set(ip, rateData);
-
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     rateLimitMap.delete(ip);
 
     const expiresAt = now + 7 * 24 * 60 * 60 * 1000;
-    const sessionData = JSON.stringify({ email: adminEmail, exp: expiresAt });
-    const payloadBase64 = Buffer.from(sessionData).toString('base64url');
+    const sessionPayload = JSON.stringify({ email: adminEmail, exp: expiresAt });
+    const payloadBase64 = Buffer.from(sessionPayload).toString('base64url');
 
     const signature = crypto
       .createHmac('sha256', secret)
@@ -73,20 +65,18 @@ export async function POST(req: Request) {
       .digest('base64url');
 
     const secureToken = `${payloadBase64}.${signature}`;
-
     const res = NextResponse.json({ success: true });
 
-    // ضبط الكوكي للجلسة
     res.cookies.set('admin_session', secureToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
     });
 
     return res;
   } catch {
-    return NextResponse.json({ error: 'Internal authentication error' }, { status: 500 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 }

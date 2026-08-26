@@ -1,10 +1,26 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import crypto from 'crypto';
 
 function verifyToken(token: string | undefined): boolean {
-  if (!token || !token.includes('.')) return false;
+  if (!token) return false;
 
-  const [payloadBase64] = token.split('.');
+  const secret = process.env.SESSION_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) return false;
+
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+
+  const [payloadBase64, signature] = parts;
+
+  // التحقق من صحة التوقيع الرقمي
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(payloadBase64)
+    .digest('base64url');
+
+  if (signature !== expectedSignature) return false;
+
   try {
     const payloadJson = Buffer.from(payloadBase64, 'base64url').toString('utf-8');
     const { exp } = JSON.parse(payloadJson);
@@ -15,7 +31,7 @@ function verifyToken(token: string | undefined): boolean {
   }
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('admin_session')?.value;
   const isValidSession = verifyToken(token);
