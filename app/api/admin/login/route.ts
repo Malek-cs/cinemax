@@ -4,34 +4,92 @@ import crypto from "crypto";
 const MAX_ATTEMPTS = 5;
 const BLOCK_TIME_MS = 15 * 60 * 1000;
 
+// Hard caps to avoid wasting CPU on absurd payloads before we even
+// get to comparing credentials.
+const MAX_EMAIL_LENGTH = 254; // RFC 5321 limit
+const MAX_PASSWORD_LENGTH = 512;
+
 // NOTE: This in-memory limiter is okay for local/single-server use.
-// For production/serverless, use Redis or your database instead.
+// For production/serverless with multiple instances, use Redis or
+// your database instead — this Map is per-instance and resets on
+// every deploy/restart.
 const rateLimitMap = new Map<
   string,
   { count: number; blockedUntil: number }
 >();
 
+/**
+ * Constant-time string comparison that also avoids leaking length
+ * via early-return timing. We hash both inputs to a fixed length
+ * first, so the timingSafeEqual call always compares equal-length
+ * buffers regardless of the original input lengths.
+ */
 function safeCompare(a: string, b: string): boolean {
-  const aBuffer = Buffer.from(a);
-  const bBuffer = Buffer.from(b);
-
-  if (aBuffer.length !== bBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(aBuffer, bBuffer);
+  const aHash = crypto.createHash("sha256").update(a).digest();
+  const bHash = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(aHash, bHash);
 }
 
-function getClientIp(req: Request): string {
-  // Prefer a trusted proxy header only when your deployment platform
-  // actually sets it correctly.
-  const forwardedFor = req.headers.get("x-forwarded-for");
+/**
+ * Verifies a password against either:
+ *  - ADMIN_PASSWORD_HASH (format: "salt:hash", scrypt-based), preferred, or
+ *  - ADMIN_PASSWORD (plaintext), legacy fallback.
+ *
+ * Using scrypt (built into Node's crypto, no extra dependency) means
+ * the real password never has to sit in plaintext in your env vars.
+ */
+function verifyPassword(
+  submitted: string,
+  adminPassword: string | undefined,
+  adminPasswordHash: string | undefined
+): boolean {
+  if (adminPasswordHash) {
+    const [salt, storedHashHex] = adminPasswordHash.split(":");
+    if (!salt || !storedHashHex) return false;
 
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
+    const storedHash = Buffer.from(storedHashHex, "hex");
+    const derivedHash = crypto.scryptSync(submitted, salt, storedHash.length);
+
+    if (derivedHash.length !== storedHash.length) return false;
+    return crypto.timingSafeEqual(derivedHash, storedHash);
   }
 
-  return req.headers.get("x-real-ip") || "unknown";
+  if (adminPassword) {
+    return safeCompare(submitted, adminPassword);
+  }
+
+  return false;
+}
+
+/**
+ * Resolves the client IP. By default this does NOT trust
+ * X-Forwarded-For, because that header is trivially spoofable by
+ * anyone unless your platform/proxy strips and re-sets it before
+ * your app sees it (Vercel, most CDNs behind a properly configured
+ * reverse proxy, etc. do this correctly).
+ *
+ * Set TRUST_PROXY_HEADERS=true only if you've verified your
+ * deployment platform sanitizes these headers upstream.
+ */
+function getClientIp(req: Request): string {
+  const trustProxyHeaders = process.env.TRUST_PROXY_HEADERS === "true";
+
+  if (trustProxyHeaders) {
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    if (forwardedFor) {
+      return forwardedFor.split(",")[0].trim();
+    }
+    const realIp = req.headers.get("x-real-ip");
+    if (realIp) return realIp;
+  }
+
+  // Fall back to a platform-provided, non-spoofable value if you have
+  // one (e.g. req.headers.get("x-vercel-forwarded-for") on Vercel, or
+  // a value your own reverse proxy sets under a name clients can't
+  // set themselves). Falling back to "unknown" means all untrusted
+  // clients share one rate-limit bucket — safer than trusting a
+  // spoofable header, but coarser.
+  return "unknown";
 }
 
 function isRateLimited(ip: string): boolean {
@@ -106,6 +164,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // Reject absurdly long input before doing any hashing/comparison
+    // work on it.
+    if (
+      body.email.length > MAX_EMAIL_LENGTH ||
+      body.password.length > MAX_PASSWORD_LENGTH
+    ) {
+      registerFailedAttempt(ip);
+
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const email = body.email.toLowerCase().trim();
 
     // IMPORTANT:
@@ -118,11 +190,16 @@ export async function POST(req: Request) {
     // -----------------------------
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
     const sessionSecret =
       process.env.SESSION_SECRET ||
       process.env.NEXTAUTH_SECRET;
 
-    if (!adminEmail || !adminPassword || !sessionSecret) {
+    if (
+      !adminEmail ||
+      (!adminPassword && !adminPasswordHash) ||
+      !sessionSecret
+    ) {
       console.error("Missing authentication environment variables");
 
       return NextResponse.json(
@@ -139,9 +216,10 @@ export async function POST(req: Request) {
       adminEmail.toLowerCase().trim()
     );
 
-    const isPasswordValid = safeCompare(
+    const isPasswordValid = verifyPassword(
       password,
-      adminPassword
+      adminPassword,
+      adminPasswordHash
     );
 
     if (!isEmailValid || !isPasswordValid) {
