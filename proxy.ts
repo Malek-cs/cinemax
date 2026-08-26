@@ -13,7 +13,6 @@ function verifyToken(token: string | undefined): boolean {
 
   const [payloadBase64, signature] = parts;
 
-  // التحقق من صحة التوقيع الرقمي
   const expectedSignature = crypto
     .createHmac('sha256', secret)
     .update(payloadBase64)
@@ -31,7 +30,7 @@ function verifyToken(token: string | undefined): boolean {
   }
 }
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('admin_session')?.value;
   const isValidSession = verifyToken(token);
