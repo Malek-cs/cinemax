@@ -55,12 +55,13 @@ export async function POST(req: Request) {
 
     rateLimitMap.delete(ip);
 
+    const secretKey: string = secret;
     const expiresAt = now + 7 * 24 * 60 * 60 * 1000;
     const sessionPayload = JSON.stringify({ email: adminEmail, exp: expiresAt });
     const payloadBase64 = Buffer.from(sessionPayload).toString('base64url');
 
     const signature = crypto
-      .createHmac('sha256', secret)
+      .createHmac('sha256', secretKey)
       .update(payloadBase64)
       .digest('base64url');
 
