@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 const rateLimitMap = new Map<string, { count: number; lastAttempt: number }>();
-const MAX_ATTEMPTS = 5;
-const BLOCK_TIME_MS = 15 * 60 * 1000;
+const MAX_ATTEMPTS = 10;
+const BLOCK_TIME_MS = 5 * 60 * 1000; // 5 دقائق حظر عند التكرار
 
 function safeCompare(a: string, b: string): boolean {
   try {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (rateData.count >= MAX_ATTEMPTS) {
       if (now - rateData.lastAttempt < BLOCK_TIME_MS) {
         return NextResponse.json(
-          { error: 'Too many attempts. Please try again later.' },
+          { error: 'Too many attempts. Please try again after 5 minutes.' },
           { status: 429 }
         );
       }
@@ -35,22 +35,23 @@ export async function POST(req: Request) {
     const { email, password } = await req.json();
 
     if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid credentials provided' }, { status: 400 });
     }
 
-    // قراءة المفاتيح بأمان بدون إظهار أي تفاصيل للفرونت إند
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
+    // Fallback في حال لم يتوفر المتغير في .env
     const secret = process.env.SESSION_SECRET || process.env.NEXTAUTH_SECRET;
 
-    // في حال عدم وجود متغيرات البيئة، نطبع تحذيراً في كونسول السيرفر فقط ونعيد خطأ عاماً للواجهة
-    if (!adminEmail || !adminPassword || !secret) {
-      console.error('[AUTH CONFIG ERROR]: Missing ADMIN_EMAIL, ADMIN_PASSWORD, or SESSION_SECRET in .env');
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    if (!adminEmail || !adminPassword) {
+      return NextResponse.json(
+        { error: 'Server authentication is not configured in .env' },
+        { status: 500 }
+      );
     }
 
     const isEmailValid = safeCompare(email.trim().toLowerCase(), adminEmail.toLowerCase());
-    const isPassValid = safeCompare(password, adminPassword);
+    const isPassValid = safeCompare(password.trim(), adminPassword.trim());
 
     if (!isEmailValid || !isPassValid) {
       rateData.count += 1;
@@ -75,17 +76,17 @@ export async function POST(req: Request) {
 
     const res = NextResponse.json({ success: true });
 
+    // ضبط الكوكي للجلسة
     res.cookies.set('admin_session', secureToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
-      priority: 'high',
     });
 
     return res;
   } catch {
-    return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    return NextResponse.json({ error: 'Internal authentication error' }, { status: 500 });
   }
 }
