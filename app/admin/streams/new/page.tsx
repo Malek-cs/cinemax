@@ -11,31 +11,23 @@ export default function AddOrEditStreamPage() {
   const [episode, setEpisode] = useState(1);
   const [loading, setLoading] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // السيرفرات القابلة للتعديل
+  // سيرفر واحد فقط كما طلبت (VidSrc VIP)
   const [servers, setServers] = useState([
-    { name: 'Server 1 (MultiEmbed)', url: '' },
-    { name: 'Server 2 (Videasy AR)', url: '' },
-    { name: 'Server 3 (VidSrc VIP)', url: '' },
-    { name: 'Server 4 (EmbedSU HD)', url: '' },
+    { name: 'Server 1 (VidSrc VIP)', url: '' },
   ]);
 
-  // دالة توليد روابط السيرفرات الافتراضية
+  // دالة توليد رابط السيرفر الوحيد
   const generateServerUrls = (id: string, s: number, e: number, type: 'movie' | 'tv') => {
     if (!id) return;
     if (type === 'movie') {
       setServers([
-        { name: 'Server 1 (MultiEmbed)', url: `https://multiembed.mov/?video_id=${id}&tmdb=1` },
-        { name: 'Server 2 (Videasy AR)', url: `https://player.videasy.net/movie/${id}?lang=ar&sub_lang=ar` },
-        { name: 'Server 3 (VidSrc VIP)', url: `https://vidsrc.to/embed/movie/${id}` },
-        { name: 'Server 4 (EmbedSU HD)', url: `https://embed.su/embed/movie/${id}` },
+        { name: 'Server 1 (VidSrc VIP)', url: `https://vidsrc.to/embed/movie/${id}` },
       ]);
     } else {
       setServers([
-        { name: 'Server 1 (MultiEmbed)', url: `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
-        { name: 'Server 2 (Videasy AR)', url: `https://player.videasy.net/tv/${id}/${s}/${e}?lang=ar&sub_lang=ar` },
-        { name: 'Server 3 (VidSrc VIP)', url: `https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
-        { name: 'Server 4 (EmbedSU HD)', url: `https://embed.su/embed/tv/${id}/${s}/${e}` },
+        { name: 'Server 1 (VidSrc VIP)', url: `https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
       ]);
     }
   };
@@ -81,34 +73,54 @@ export default function AddOrEditStreamPage() {
     setServers(servers.filter((_, i) => i !== index));
   };
 
-  // نشر وحفظ الإعدادات
-  const handleSubmit = (e: React.FormEvent) => {
+  // نشر وحفظ الإعدادات في قاعدة البيانات
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !tmdbId) {
       alert('Please provide a valid title and TMDB ID');
       return;
     }
 
-    // هنا يتم إرسال البيانات للباك إند أو تخزينها
-    console.log({
-      tmdbId,
+    setSaving(true);
+    
+    // إعداد البيانات للإرسال
+    const payload = {
+      tmdbId: parseInt(tmdbId),
       mediaType,
       title,
       season: mediaType === 'tv' ? season : undefined,
       episode: mediaType === 'tv' ? episode : undefined,
-      servers,
-    });
+      servers: servers.filter(s => s.url.trim() !== ''), // إرسال السيرفرات التي لها رابط فقط
+    };
 
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 4000);
+    console.log("Saving override streams:", payload);
+
+    try {
+      const res = await fetch('/api/admin/custom-streams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 4000);
+      } else {
+        alert('Data was logged to console, but API route /api/admin/custom-streams might not be set up yet.');
+      }
+    } catch (error) {
+      alert('Failed to save to database.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Add & Configure Stream Servers</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Add & Configure Custom Streams</h1>
         <p className="text-xs text-slate-400 mt-1">
-          Auto-fetch movie/series metadata and configure custom or fallback stream embed URLs.
+          Auto-fetch media metadata and configure override stream URLs for this specific title.
         </p>
       </div>
 
@@ -159,7 +171,6 @@ export default function AddOrEditStreamPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                
                 value={tmdbId}
                 onChange={(e) => setTmdbId(e.target.value)}
                 className="flex-1 px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
@@ -240,7 +251,7 @@ export default function AddOrEditStreamPage() {
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <label className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
-                Configured Stream Gateways & Embed URLs
+                Override Custom Embed URLs
               </label>
               <button
                 type="button"
@@ -305,16 +316,17 @@ export default function AddOrEditStreamPage() {
           {/* تنبيه النجاح */}
           {savedSuccess && (
             <div className="p-3 bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs rounded-xl text-center font-medium">
-              ✓ Stream servers and endpoints updated successfully!
+              ✓ Override stream servers updated successfully!
             </div>
           )}
 
           {/* زر الحفظ والنشر */}
           <button
             type="submit"
-            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs tracking-wider uppercase transition shadow-lg shadow-emerald-600/30 cursor-pointer"
+            disabled={saving}
+            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs tracking-wider uppercase transition shadow-lg shadow-emerald-600/30 cursor-pointer disabled:opacity-50"
           >
-            Save & Publish Stream
+            {saving ? 'Saving...' : 'Save & Publish Stream'}
           </button>
         </form>
       </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { STREAM_SERVERS } from '@/lib/servers';
 
 interface TMDBMovieResult {
   id: number;
@@ -66,7 +65,6 @@ export default function AdminStreamsPage() {
 
         if (!isMounted) return;
 
-        // تصفية التكرارات عبر Map
         const uniqueMoviesMap = new Map<number, TMDBMovieResult>();
         [...(mData1.results ?? []), ...(mData2.results ?? [])].forEach((m) => {
           if (m?.id && !uniqueMoviesMap.has(m.id)) {
@@ -81,6 +79,7 @@ export default function AdminStreamsPage() {
           }
         });
 
+        // الاعتماد على Server 1 (VidSrc VIP) حصرياً
         const movies: MediaItem[] = Array.from(uniqueMoviesMap.values()).map((m) => ({
           id: m.id,
           title: m.title || 'Untitled Movie',
@@ -88,10 +87,12 @@ export default function AdminStreamsPage() {
           poster: m.poster_path,
           rating: typeof m.vote_average === 'number' ? m.vote_average.toFixed(1) : '0.0',
           releaseDate: m.release_date ? m.release_date.split('-')[0] : 'N/A',
-          servers: STREAM_SERVERS.map((srv) => ({
-            name: srv.name,
-            url: srv.movie(m.id),
-          })),
+          servers: [
+            {
+              name: 'Server 1 (VidSrc VIP)',
+              url: `https://vidsrc.to/embed/movie/${m.id}`,
+            },
+          ],
         }));
 
         const series: MediaItem[] = Array.from(uniqueTvMap.values()).map((s) => ({
@@ -101,10 +102,12 @@ export default function AdminStreamsPage() {
           poster: s.poster_path,
           rating: typeof s.vote_average === 'number' ? s.vote_average.toFixed(1) : '0.0',
           releaseDate: s.first_air_date ? s.first_air_date.split('-')[0] : 'N/A',
-          servers: STREAM_SERVERS.map((srv) => ({
-            name: srv.name,
-            url: srv.tv(s.id, 1, 1),
-          })),
+          servers: [
+            {
+              name: 'Server 1 (VidSrc VIP)',
+              url: `https://vidsrc.to/embed/tv/${s.id}/1/1`,
+            },
+          ],
         }));
 
         setMediaList([...movies, ...series]);
@@ -140,7 +143,7 @@ export default function AdminStreamsPage() {
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Active Media & Stream Servers</h1>
         <p className="text-xs text-slate-400 mt-1">
-          Catalog synchronized with TMDB — Multi-server inspection & fallback endpoints.
+          Catalog synchronized with TMDB — Server inspection & fallback endpoints.
         </p>
       </div>
 
@@ -194,7 +197,7 @@ export default function AdminStreamsPage() {
               <th className="py-3.5 px-4">Media & Poster</th>
               <th className="py-3.5 px-4">Type</th>
               <th className="py-3.5 px-4">Rating</th>
-              <th className="py-3.5 px-4">Configured Gateways ({STREAM_SERVERS.length})</th>
+              <th className="py-3.5 px-4">Configured Gateway (1)</th>
               <th className="py-3.5 px-4 text-right">Watch Page</th>
             </tr>
           </thead>
@@ -259,20 +262,18 @@ export default function AdminStreamsPage() {
                   </td>
 
                   <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {item.servers.map((srv, idx) => (
-                        <a
-                          key={idx}
-                          href={srv.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-700 text-slate-300 hover:text-emerald-400 px-2.5 py-1 rounded text-[11px] font-medium transition shrink-0"
-                          title={`Open ${srv.name}`}
-                        >
-                          Server {idx + 1}
-                        </a>
-                      ))}
-                    </div>
+                    {item.servers.map((srv, idx) => (
+                      <a
+                        key={idx}
+                        href={srv.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-700 text-slate-300 hover:text-emerald-400 px-2.5 py-1 rounded text-[11px] font-medium transition inline-block"
+                        title={`Open ${srv.name}`}
+                      >
+                        Server 1 (VidSrc VIP)
+                      </a>
+                    ))}
                   </td>
 
                   <td className="py-3.5 px-4 text-right">

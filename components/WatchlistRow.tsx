@@ -115,9 +115,13 @@ function Card({
 
         {/* Remove × */}
         <button
-          onClick={() => onRemove(item.id, item.type)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRemove(item.id, item.type);
+          }}
           title="Remove from My List"
-          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 text-white text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#e63946] z-10"
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 text-white text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#e63946] z-20"
         >
           ×
         </button>

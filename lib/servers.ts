@@ -6,16 +6,6 @@ export interface StreamServer {
 
 export const STREAM_SERVERS: StreamServer[] = [
   {
-    name: 'Server 1 (MultiEmbed)',
-    movie: (id: number) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
-    tv: (id: number, s = 1, e = 1) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`,
-  },
-  {
-    name: 'Server 2 (Videasy AR)',
-    movie: (id: number) => `https://player.videasy.net/movie/${id}?lang=ar&sub_lang=ar`,
-    tv: (id: number, s = 1, e = 1) => `https://player.videasy.net/tv/${id}/${s}/${e}?lang=ar&sub_lang=ar`,
-  },
-  {
     name: 'Server 3 (VidSrc VIP)',
     movie: (id: number) => `https://vidsrc.to/embed/movie/${id}`,
     tv: (id: number, s = 1, e = 1) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,

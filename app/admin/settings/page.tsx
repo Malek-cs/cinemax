@@ -18,10 +18,9 @@ export default function AdminSettingsPage() {
   
   // Platform Controls State
   const [maintenanceMode, setMaintenanceMode] = useState<boolean>(false);
-  const [defaultServer, setDefaultServer] = useState<string>('Server 1 (MultiEmbed)');
   const [saveStatus, setSaveStatus] = useState<string>('');
 
-  // جلب المستخدمين مغلفة بـ useCallback لتفادي أخطاء الـ ESLint
+  // Fetch Users
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
     try {
@@ -39,11 +38,25 @@ export default function AdminSettingsPage() {
     }
   }, []);
 
+  // Fetch Platform Settings
+  const fetchSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const data = await res.json();
+      if (res.ok && data) {
+        setMaintenanceMode(data.maintenanceMode ?? false);
+      }
+    } catch (err) {
+      console.error('Failed to fetch platform settings:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchSettings();
+  }, [fetchUsers, fetchSettings]);
 
-  // تحديث رتبة أو حالة المستخدم
+  // Update user role or status
   const handleUpdateUser = async (userId: string, updates: { role?: string; isBanned?: boolean }) => {
     try {
       const res = await fetch('/api/admin/users', {
@@ -62,9 +75,30 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleSavePlatformSettings = (e: React.FormEvent) => {
+  // Save platform settings to API
+  const handleSavePlatformSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaveStatus('Settings updated successfully!');
+    setSaveStatus('Saving...');
+    
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          maintenanceMode 
+        }),
+      });
+
+      if (res.ok) {
+        setSaveStatus('Settings updated successfully!');
+      } else {
+        setSaveStatus('Failed to update settings.');
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+      setSaveStatus('Error saving settings.');
+    }
+    
     setTimeout(() => setSaveStatus(''), 3000);
   };
 
@@ -77,9 +111,9 @@ export default function AdminSettingsPage() {
     <div className="space-y-8 max-w-6xl">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Platform & Server Settings</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Platform Settings</h1>
         <p className="text-xs text-slate-400 mt-1">
-          Configure streaming gateways, maintenance toggles, and manage system users.
+          Configure maintenance toggles and manage system users. (Stream servers are now managed in Global Gateways).
         </p>
       </div>
 
@@ -92,7 +126,7 @@ export default function AdminSettingsPage() {
         <form onSubmit={handleSavePlatformSettings} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Maintenance Mode Toggle */}
-            <div className="flex items-center justify-between p-4 bg-slate-950 border border-slate-800 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-slate-950 border border-slate-800 rounded-xl w-full">
               <div>
                 <div className="text-xs font-semibold text-white">Maintenance Mode</div>
                 <div className="text-[11px] text-slate-400">Lock the frontend and show maintenance screen</div>
@@ -111,21 +145,6 @@ export default function AdminSettingsPage() {
                 />
               </button>
             </div>
-
-            {/* Default Server Priority */}
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
-              <label className="text-xs font-semibold text-white block">Default Fallback Stream Gateway</label>
-              <select
-                value={defaultServer}
-                onChange={(e) => setDefaultServer(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
-              >
-                <option value="Server 1 (MultiEmbed)">Server 1 (MultiEmbed)</option>
-                <option value="Server 2 (Videasy AR)">Server 2 (Videasy AR)</option>
-                <option value="Server 3 (VidSrc VIP)">Server 3 (VidSrc VIP)</option>
-                <option value="Server 4 (EmbedSU)">Server 4 (EmbedSU)</option>
-              </select>
-            </div>
           </div>
 
           <div className="flex items-center justify-between">
@@ -135,7 +154,7 @@ export default function AdminSettingsPage() {
             >
               Save Platform Settings
             </button>
-            {saveStatus && <span className="text-xs text-emerald-400 font-medium">{saveStatus}</span>}
+            {saveStatus && <span className={`text-xs font-medium ${saveStatus.includes('Error') || saveStatus.includes('Failed') ? 'text-red-400' : 'text-emerald-400'}`}>{saveStatus}</span>}
           </div>
         </form>
       </div>
